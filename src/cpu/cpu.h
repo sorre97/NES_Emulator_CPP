@@ -47,7 +47,7 @@ class CPU
         void reset();
 
         /* Execute single instruction */
-        void executeInstruction();
+        void step();
 
         /* Getters for debugging and testing */
         uint16_t getProgramCounter() const { return PC; }

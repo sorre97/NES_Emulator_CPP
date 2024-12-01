@@ -4,6 +4,8 @@
 #include <cstdint>
 #include <vector>
 #include "NESROM.h"
+#include "mapper.h"
+#include "memory_ranges.h"
 
 /*
  * NES CPU Memory Map
@@ -24,37 +26,22 @@
  *   mapper, which determines how PRG-ROM and PRG-RAM are accessed.
  */
 
-// Memory region constants
-constexpr uint16_t WRAM_STARTADDR = 0x0000;
-constexpr uint16_t WRAM_ENDADDR = 0x0800; // Exclusive range for easier checks
-
-constexpr uint16_t WRAM_MIRRORS_STARTADDR = 0x0800;
-constexpr uint16_t WRAM_MIRRORS_ENDADDR = 0x2000;
-
-constexpr uint16_t PPU_REGISTERS_STARTADDR = 0x2000;
-constexpr uint16_t PPU_REGISTERS_ENDADDR = 0x2008;
-
-constexpr uint16_t PPU_MIRRORS_STARTADDR = 0x2008;
-constexpr uint16_t PPU_MIRRORS_ENDADDR = 0x4000;
-
-constexpr uint16_t APU_IO_STARTADDR = 0x4000;
-constexpr uint16_t APU_IO_ENDADDR = 0x4020;
-
-constexpr uint16_t CARTRIDGE_SRAM_STARTADDR = 0x6000;
-constexpr uint16_t CARTRIDGE_SRAM_ENDADDR = 0x8000;
-
-constexpr uint16_t CARTRIDGE_ROM_STARTADDR = 0x8000;
-constexpr uint16_t CARTRIDGE_ROM_ENDADDR = 0xFFFF;
+// Forward declaration of PPU
+class PPU;
 
 class Memory
 {
     public:
         /* Default Constructor */
-        Memory();
+        Memory(PPU& ppuInstance);
 
-        /* Read/Write operations */
-        uint8_t read(uint16_t address) const;
-        void write(uint16_t address, uint8_t data);
+        /* CPU Read/Write operations */
+        uint8_t CPUread(uint16_t address) const;
+        void CPUwrite(uint16_t address, uint8_t data);
+
+        /* PPU Read/Write operations */
+        uint8_t PPUread(uint16_t address) const;
+        void PPUwrite(uint16_t address, uint8_t data);
 
         /* Load Cartridge in PRGROM */
         void loadCartridge(const NESROM& cartridge);
@@ -63,6 +50,10 @@ class Memory
         std::vector<uint8_t> WRAM;
         std::vector<uint8_t> PRGROM; // PRG-ROM data
         std::vector<uint8_t> CHRROM; // CHR-ROM data
+
+        std::unique_ptr<Mapper> mapper;
+
+        PPU& ppu; // Reference to the PPU
 };
 
 #endif // MEMORY_H

@@ -100,3 +100,12 @@ const std::vector<uint8_t>& NESROM::getPRGROM() const {
 const std::vector<uint8_t>& NESROM::getCHRROM() const {
     return CHRROM;
 }
+
+
+uint8_t NESROM::getPRGBankCount() const {
+    return RomHeader.PRGROM_size; // Already in 16 KB units
+}
+
+uint8_t NESROM::getCHRBankCount() const {
+    return RomHeader.CHRROM_size; // Already in 8 KB units
+}

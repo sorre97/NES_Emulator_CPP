@@ -75,6 +75,9 @@ class NESROM
         const std::vector<uint8_t>& getPRGROM() const;
         const std::vector<uint8_t>& getCHRROM() const;
 
+        uint8_t getPRGBankCount() const;
+        uint8_t getCHRBankCount() const;
+
     private:
         // Define NESHeader as a typedef for the struct
         struct RomHeaderType {

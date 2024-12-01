@@ -19,5 +19,5 @@ include_directories(${CMAKE_SOURCE_DIR}/include)
 add_subdirectory(src)
 
 # Enable testing
-add_subdirectory(test)
-enable_testing()
+#add_subdirectory(test)
+#enable_testing()

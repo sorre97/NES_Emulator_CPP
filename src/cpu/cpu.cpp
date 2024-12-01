@@ -313,7 +313,7 @@ void CPU::reset() {
     A = X = Y = 0;
 }
 
-void CPU::executeInstruction() {
+void CPU::step() {
     if (cycles > 0) {
         --cycles; // Decrement remaining cycles for the current instruction
         return;
@@ -774,11 +774,11 @@ void CPU::updateZeroNegativeFlags(uint8_t value) {
 
 
 uint8_t CPU::read(uint16_t address) {
-    return memory.read(address);
+    return memory.CPUread(address);
 }
 
 void CPU::write(uint16_t address, uint8_t value) {
-    memory.write(address, value);
+    memory.CPUwrite(address, value);
 }
 
 // Flag manipulation

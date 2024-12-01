@@ -4,6 +4,7 @@
 #include <iostream>
 #include <iomanip>
 #include "config.h"
+#include "ppu.h"
 
 int main()
 {
@@ -23,7 +24,9 @@ int main()
         }
 
         // Initialize memory and load the cartridge
-        Memory memory;
+        PPU ppu;
+        Memory memory(ppu);
+
         memory.loadCartridge(rom);
         std::cout << "Successfully loaded cartridge into memory." << std::endl;
 
@@ -50,7 +53,13 @@ int main()
             }
             // TODO: remove try catch as it will be catched underneath and return
             try{
-                cpu.executeInstruction();
+                // Execute one CPU instruction
+                cpu.step();
+
+                // Synchronize PPU (three steps for every CPU step)
+                for (int i = 0; i < 3; ++i) {
+                    ppu.step();
+                }
             }catch (const std::exception& e) {
                 if (DEBUG)
                 {
