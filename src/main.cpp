@@ -1,79 +1,49 @@
-#include "NESROM.h"
-#include "memory.h"
-#include "cpu.h"
+#include "Cpu/cpu6502.h"
+#include "Bus/businterface.h"
+#include "Cartridge/cartridge.h"
+#include "disassembler.h"
+
 #include <iostream>
-#include <iomanip>
-#include "config.h"
-#include "ppu.h"
+#include <memory>
+#include <thread>
+#include <chrono>
 
-int main()
-{
-    try
-    {
-        // Load ROM
-        //NESROM rom("../roms/Metal Gear.nes");
-        NESROM rom("../roms/Super Mario Bros.nes");
-        //NESROM rom("../roms/test_lda_immediate.nes");
+int main() {
+    try {
+        // Load the cartridge
+        auto cartridge = std::make_shared<Cartridge>("../roms/Super Mario Bros.nes");
 
-        std::cout << "Successfully parsed ROM." << std::endl;
-        if (DEBUG)
-        {
-            std::cout << "  > [DEBUG] PRG-ROM size: " << static_cast<int>(rom.getPRGROM().size()) << " bytes" << std::endl;
-            std::cout << "  > [DEBUG] CHR-ROM size: " << static_cast<int>(rom.getCHRROM().size()) << " bytes" << std::endl;
-            std::cout << "  > [DEBUG] Mapper ID: " << static_cast<int>(rom.getMapperID()) << std::endl;
+        // Create the BusInterface and attach the cartridge
+        auto bus = std::make_shared<BusInterface>(cartridge);
+
+        // Create the CPU and link it to the bus
+        auto cpu = std::make_shared<CPU6502>(bus);
+
+        // Create the Disassembler, passing the CPU and bus
+        Disassembler disassembler(cpu, bus);
+
+        // Reset the CPU
+        cpu->reset();
+        std::cout << "CPU reset complete.\n";
+
+        // Print initial state
+        std::cout << "Initial instruction view:\n";
+        disassembler.print();
+
+        // Main emulation loop
+        while (true) {
+            // Print the current disassembled instruction view
+            disassembler.print();
+
+            // Wait for 1 second
+            std::this_thread::sleep_for(std::chrono::milliseconds(500));
+
+            // Simulate instruction execution
+            // std::cout << "\nExecuting instruction...\n";
+            cpu->step(); // Simulate one CPU instruction execution
         }
 
-        // Initialize memory and load the cartridge
-        PPU ppu;
-        Memory memory(ppu);
-
-        memory.loadCartridge(rom);
-        std::cout << "Successfully loaded cartridge into memory." << std::endl;
-
-        // Initialize the CPU
-        NES::CPU cpu(memory);
-
-        // Reset the CPU (sets PC to reset vector, initializes registers, etc.)
-        cpu.reset();
-        std::cout << "CPU reset complete." << std::endl;
-        if (DEBUG)
-        {
-            cpu.printCPUState();
-        }
-
-        // Fetch and execute a limited number of instructions
-        int instructionCount = 30;
-        while (instructionCount-- > 0)
-        {
-            if (DEBUG)
-            {
-                std::cout << "Executing instruction at PC: 0x" 
-                          << std::hex << std::setw(4) << std::setfill('0') << cpu.getProgramCounter() 
-                          << std::endl;
-            }
-            // TODO: remove try catch as it will be catched underneath and return
-            try{
-                // Execute one CPU instruction
-                cpu.step();
-
-                // Synchronize PPU (three steps for every CPU step)
-                for (int i = 0; i < 3; ++i) {
-                    ppu.step();
-                }
-            }catch (const std::exception& e) {
-                if (DEBUG)
-                {
-                    std::cerr << "Error: " << e.what() << std::endl;
-                }
-            }
-            
-        }
-
-        std::cout << "Execution of 4 instructions complete." << std::endl;
-
-    }
-    catch (const std::exception& e)
-    {
+    } catch (const std::exception& e) {
         std::cerr << "Error: " << e.what() << std::endl;
         return 1;
     }

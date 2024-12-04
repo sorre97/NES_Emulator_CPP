@@ -1,39 +1,77 @@
-# Add the ROM component as a library
-add_library(rom rom/NESROM.cpp)
-target_include_directories(rom PUBLIC ${CMAKE_CURRENT_SOURCE_DIR}/rom)
+# CMake minimum version and project name
+cmake_minimum_required(VERSION 3.16)
+project(NES_Emulator)
 
-# Add the Mapper component as a library
-add_library(mapper mapper/mapper.cpp)
-target_include_directories(mapper PUBLIC 
-    ${CMAKE_CURRENT_SOURCE_DIR}/mapper 
-    ${CMAKE_CURRENT_SOURCE_DIR}/memory # Include memory for memory_ranges.h
+# Set C++ Standard
+set(CMAKE_CXX_STANDARD 17)
+set(CMAKE_CXX_STANDARD_REQUIRED ON)
+
+# Locate Raylib
+find_package(raylib REQUIRED)
+
+# Define source directory for convenience
+set(SRC_DIR ${CMAKE_CURRENT_SOURCE_DIR})
+
+# Cartridge Component (includes mapper)
+add_library(cartridge 
+    ${SRC_DIR}/Cartridge/cartridge.cpp
+    ${SRC_DIR}/Cartridge/mapper.cpp
+)
+target_include_directories(cartridge PUBLIC 
+    ${SRC_DIR}/Cartridge
 )
 
-# Add the PPU component as a library
-add_library(ppu ppu/ppu.cpp) # Assuming ppu/ppu.cpp exists
-target_include_directories(ppu PUBLIC ${CMAKE_CURRENT_SOURCE_DIR}/ppu)
+# Bus (formerly Memory) Component
+add_library(businterface 
+    ${SRC_DIR}/Bus/businterface.cpp
+)
+target_include_directories(businterface PUBLIC 
+    ${SRC_DIR}
+)
+target_link_libraries(businterface PUBLIC 
+    cartridge # BusInterface depends on Cartridge
+)
 
-# Add the Memory component as a library
-add_library(memory memory/memory.cpp)
-target_include_directories(memory PUBLIC ${CMAKE_CURRENT_SOURCE_DIR}/memory)
-target_link_libraries(memory PUBLIC rom mapper ppu) # Memory depends on ROM, Mapper, and PPU
+# CPU Component
+add_library(cpu 
+    ${SRC_DIR}/Cpu/cpu6502.cpp
+    ${SRC_DIR}/Cpu/cpu6502_opcodes.cpp # Add opcode table implementation
+)
+target_include_directories(cpu PUBLIC 
+    ${SRC_DIR}
+)
+target_link_libraries(cpu PUBLIC 
+    businterface # CPU depends on BusInterface
+)
 
-# Add the CPU component as a library
-add_library(cpu cpu/cpu.cpp)
-target_include_directories(cpu PUBLIC ${CMAKE_CURRENT_SOURCE_DIR}/cpu)
-target_link_libraries(cpu PUBLIC memory) # CPU depends on Memory
+# Disassembler Component
+add_library(disassembler
+    ${SRC_DIR}/Disassembler/disassembler.cpp
+)
+target_include_directories(disassembler PUBLIC
+    ${SRC_DIR}/Disassembler # Correct path to the Disassembler folder
+)
+target_link_libraries(disassembler PUBLIC 
+    cpu         # Disassembler depends on CPU
+    businterface # Disassembler depends on BusInterface
+)
 
-# Main emulator executable
-add_executable(nes-emulator main.cpp)
-
-# Link libraries to the main executable
-target_link_libraries(nes-emulator PRIVATE cpu memory rom mapper ppu)
-
-# Include all library directories for the main executable
+# Main Emulator Executable
+add_executable(nes-emulator 
+    ${SRC_DIR}/main.cpp
+)
 target_include_directories(nes-emulator PUBLIC 
-    ${CMAKE_CURRENT_SOURCE_DIR}/cpu 
-    ${CMAKE_CURRENT_SOURCE_DIR}/memory 
-    ${CMAKE_CURRENT_SOURCE_DIR}/rom
-    ${CMAKE_CURRENT_SOURCE_DIR}/mapper
-    ${CMAKE_CURRENT_SOURCE_DIR}/ppu
+    ${SRC_DIR}
 )
+target_link_libraries(nes-emulator PRIVATE 
+    disassembler # Main depends on Disassembler
+    cpu 
+    businterface 
+    cartridge 
+    raylib # Link Raylib here
+)
+
+# Link additional frameworks for macOS (important for Raylib)
+if(APPLE)
+    target_link_libraries(nes-emulator PRIVATE "-framework Cocoa" "-framework IOKit" "-framework CoreAudio" "-framework AudioToolbox")
+endif()
