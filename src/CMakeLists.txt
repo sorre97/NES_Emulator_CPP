@@ -56,6 +56,22 @@ target_link_libraries(disassembler PUBLIC
     businterface # Disassembler depends on BusInterface
 )
 
+# PPU Component
+add_library(ppu
+    ${SRC_DIR}/PPU/ppu.cpp
+)
+target_include_directories(ppu PUBLIC
+    ${SRC_DIR}/PPU # Correct path to the PPU folder
+)
+target_link_libraries(ppu PUBLIC
+    businterface # PPU depends on BusInterface
+)
+
+# Extend BusInterface to include PPU
+target_link_libraries(businterface PUBLIC 
+    ppu # BusInterface depends on PPU
+)
+
 # Main Emulator Executable
 add_executable(nes-emulator 
     ${SRC_DIR}/main.cpp
@@ -68,7 +84,8 @@ target_link_libraries(nes-emulator PRIVATE
     cpu 
     businterface 
     cartridge 
-    raylib # Link Raylib here
+    ppu          # Main depends on PPU indirectly
+    raylib       # Link Raylib here
 )
 
 # Link additional frameworks for macOS (important for Raylib)
