@@ -9,6 +9,8 @@
 #include <cstdint>
 #include "cartridge.h"
 #include <memory>
+#include "ppu.h"
+
 
 /**
  * @class BusInterface
@@ -30,7 +32,7 @@ public:
      * @brief Constructs the BusInterface with a Cartridge instance.
      * @param cartridge Unique pointer to the Cartridge instance.
      */
-    explicit BusInterface(std::shared_ptr<Cartridge> cartridge);
+    explicit BusInterface(std::shared_ptr<Cartridge> cartridge, std::shared_ptr<PPU> ppu);
 
     /**
      * @brief Reads a byte from the CPU bus at the specified address.
@@ -62,6 +64,7 @@ public:
 
 private:
     std::shared_ptr<Cartridge> cartridge; /**< Pointer to the loaded NES cartridge. */
+    std::shared_ptr<PPU> ppu;
 };
 
 #endif // BUSINTERFACE_H

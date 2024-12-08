@@ -760,7 +760,10 @@ uint16_t CPU::resolveAddress(AddressingMode mode) {
             return PC + static_cast<uint16_t>(offset); // Calculate the effective address (unsigned wrap-around subtraction)
         }
         default:
-            throw std::runtime_error("Unsupported addressing mode");
+            std::stringstream ss;
+            ss << std::string(__PRETTY_FUNCTION__) << " - "
+            << "Unsupported addressing mode";
+            throw std::runtime_error(ss.str());
     }
 }
 
